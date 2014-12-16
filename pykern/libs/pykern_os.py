@@ -1,5 +1,7 @@
 from pykern.filesystem import FileSystem
 
+import os
+
 
 class stat_result(object):
     def __init__(self, st_mode, st_size):
@@ -7,7 +9,9 @@ class stat_result(object):
         self.st_size = st_size
 
     def __repr__(self):
-        return '<stat_result: st_size=%d>' % self.st_size
+        return '<stat_result: st_mode=%d, st_size=%d>' % (
+            self.st_mode, self.st_size,
+        )
 
     def is_directory(self):
         import stat
@@ -29,7 +33,6 @@ def getcwd():
 
 
 def chdir(path):
-    import os
     fs = FileSystem()
     absolute_path = fs.get_absolute_of('%s' % path)
     if not os.path.isdir(absolute_path):
@@ -39,12 +42,14 @@ def chdir(path):
 
 def listdir(path):
     fs = FileSystem()
-    absolute_target_path = fs.get_absolute_of('%s/' % path)
+    if not os.path.isdir(path):
+        raise OSError('Not a directory: "%s"' % path)
+    absolute_target_path = fs.get_absolute_of('%s' % path)
     if not absolute_target_path.endswith('/'):
         absolute_target_path += '/'
     result = [
         path[len(absolute_target_path):]
-        for path in FileSystem().metadata.keys()
+        for path in FileSystem().metadata
         if path.startswith(absolute_target_path) and
         '/' not in path.split(absolute_target_path, 1)[1] and
         path != absolute_target_path
